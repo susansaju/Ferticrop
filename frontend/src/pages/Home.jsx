@@ -1,24 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Image, TestTube, Sprout, Leaf, BarChart3, Droplets, Calendar, Calculator, Lightbulb } from 'lucide-react';
+import { TestTube, Sprout, Leaf, BarChart3, Calendar, Calculator, Lightbulb } from 'lucide-react';
 
 const Home = () => {
   const modules = [
     {
-      icon: Image,
-      title: 'Soil Type Classification',
-      description: 'Upload soil image for CNN-based classification',
-      link: '/soil-image',
-      color: 'from-emerald-500 to-emerald-600'
-    },
-    {
       icon: TestTube,
-      title: 'Soil Analysis',
-      description: 'RF-based classification using NPK, pH values',
-      link: '/soil-analysis',
-      color: 'from-green-500 to-green-600'
+      title: 'Soil Classification',
+      description: 'Image Analysis & Parameter Analysis',
+      link: '/soil-classification',
+      color: 'from-emerald-500 to-emerald-600'
     },
     {
       icon: Sprout,
@@ -40,13 +32,6 @@ const Home = () => {
       description: 'Assess overall soil health and quality',
       link: '/soil-quality',
       color: 'from-cyan-500 to-cyan-600'
-    },
-    {
-      icon: Droplets,
-      title: 'pH Estimation',
-      description: 'Estimate pH level from soil image',
-      link: '/ph-estimation',
-      color: 'from-emerald-600 to-green-600'
     },
     {
       icon: Calendar,
@@ -108,7 +93,7 @@ const Home = () => {
             const IconComponent = module.icon;
             return (
               <Link to={module.link} key={index}>
-                <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-green-100 group">
+                <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-green-100 group cursor-pointer">
                   <CardHeader>
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${module.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                       <IconComponent className="h-6 w-6 text-white" />
@@ -116,11 +101,6 @@ const Home = () => {
                     <CardTitle className="text-xl text-gray-900">{module.title}</CardTitle>
                     <CardDescription className="text-gray-600">{module.description}</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <Button variant="ghost" className="w-full text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50">
-                      Explore Module
-                    </Button>
-                  </CardContent>
                 </Card>
               </Link>
             );
