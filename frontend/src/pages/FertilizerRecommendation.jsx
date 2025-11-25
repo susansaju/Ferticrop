@@ -5,217 +5,294 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ArrowLeft, Loader2, Leaf, Package } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Calculator } from 'lucide-react';
 import { mockRecommendFertilizer, crops } from '../mock';
 
-const FertilizerRecommendation = () => {
-  const [formData, setFormData] = useState({
-    crop: '',
-    N: '',
-    P: '',
-    K: ''
-  });
+const FertilizerAdvisorCombined = () => {
+
+  /* ------------------------------ Advisor States ------------------------------ */
+  const [formData, setFormData] = useState({ crop: '', N: '', P: '', K: '' });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [totalCost, setTotalCost] = useState(0);
 
+  /* ------------------------------ Manual Cost States -------------------------- */
+  const [items, setItems] = useState([{ fertilizer: "", qty: "", price: "" }]);
+  const [manualTotal, setManualTotal] = useState(0);
+
+  /* ---------------------------- Functions ---------------------------------- */
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSelectChange = (value) => {
-    setFormData({
-      ...formData,
-      crop: value
-    });
+    setFormData({ ...formData, crop: value });
+  };
+
+  const handleManualChange = (index, field, value) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
+  };
+
+  const handleAddItem = () => {
+    setItems([...items, { fertilizer: "", qty: "", price: "" }]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     const npkValues = {
       N: parseFloat(formData.N),
       P: parseFloat(formData.P),
       K: parseFloat(formData.K)
     };
-    
+
     const recommendations = await mockRecommendFertilizer(formData.crop, npkValues);
     setResult(recommendations);
+
+    const total = recommendations.fertilizers.reduce(
+      (sum, fert) => sum + fert.quantity * fert.price_per_kg, 0
+    );
+    setTotalCost(total);
     setLoading(false);
   };
 
-  const getTotalCost = () => {
-    if (!result) return 0;
-    return result.fertilizers.reduce((sum, fert) => sum + (fert.quantity * fert.price_per_kg), 0);
+  const calculateManualCost = () => {
+    let total = 0;
+    items.forEach(item => {
+      const qty = parseFloat(item.qty) || 0;
+      const price = parseFloat(item.price) || 0;
+      total += qty * price;
+    });
+    setManualTotal(total);
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+
+      {/* Header */}
       <header className="bg-white shadow-sm border-b border-green-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-6">
           <Link to="/" className="inline-flex items-center text-emerald-700 hover:text-emerald-800 mb-4">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Home
+            <ArrowLeft className="mr-2 h-5 w-5" /> Back to Home
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Fertilizer Recommendation System</h1>
-          <p className="text-gray-600 mt-2">Get optimal fertilizer type and quantity recommendations</p>
+
+          <h1 className="text-3xl font-bold text-gray-900">Fertilizer Advisor & Cost Calculator</h1>
+          <p className="text-gray-600 mt-2">Get recommendations + Calculate total cost</p>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Form */}
-          <Card className="border-green-100">
-            <CardHeader>
-              <CardTitle>Crop & Soil Data</CardTitle>
-              <CardDescription>Enter crop name and current NPK levels</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="crop">Select Crop</Label>
-                  <Select onValueChange={handleSelectChange} required>
-                    <SelectTrigger className="border-green-200">
-                      <SelectValue placeholder="Choose crop" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {crops.map((crop) => (
-                        <SelectItem key={crop.name} value={crop.name}>{crop.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      {/* Main Layout */}
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
 
-                <div className="space-y-2">
-                  <Label htmlFor="N">Current Nitrogen (N) - kg/ha</Label>
-                  <Input
-                    id="N"
-                    name="N"
-                    type="number"
-                    step="0.1"
-                    value={formData.N}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., 40"
-                    className="border-green-200"
-                  />
-                </div>
+        {/* Advisor Form */}
+        <Card className="border-green-200">
+          <CardHeader>
+            <CardTitle>Enter Crop & Soil Data</CardTitle>
+            <CardDescription>Fill the crop and current NPK readings</CardDescription>
+          </CardHeader>
 
-                <div className="space-y-2">
-                  <Label htmlFor="P">Current Phosphorus (P) - kg/ha</Label>
-                  <Input
-                    id="P"
-                    name="P"
-                    type="number"
-                    step="0.1"
-                    value={formData.P}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., 25"
-                    className="border-green-200"
-                  />
-                </div>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-                <div className="space-y-2">
-                  <Label htmlFor="K">Current Potassium (K) - kg/ha</Label>
-                  <Input
-                    id="K"
-                    name="K"
-                    type="number"
-                    step="0.1"
-                    value={formData.K}
-                    onChange={handleChange}
-                    required
-                    placeholder="e.g., 35"
-                    className="border-green-200"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>Select Crop</Label>
+                <Select value={formData.crop} onValueChange={handleSelectChange} required>
+                  <SelectTrigger className="border-green-200">
+                    <SelectValue placeholder="Choose crop" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {crops.map((c) => (
+                      <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Calculating...
-                    </>
-                  ) : (
-                    'Get Fertilizer Recommendations'
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              {/* NPK Inputs */}
+              <div className="space-y-2">
+                <Label>Nitrogen (N) - kg/ha</Label>
+                <Input
+                  name="N"
+                  type="number"
+                  value={formData.N}
+                  onChange={handleChange}
+                  className="border-green-200"
+                  required
+                />
+              </div>
 
-          {/* Results */}
-          {result && (
-            <div className="space-y-4 animate-in fade-in duration-500">
-              <Card className="border-green-100">
-                <CardHeader>
-                  <CardTitle>Recommended Fertilizers</CardTitle>
-                  <CardDescription>Optimal fertilizer mix for {formData.crop}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {result.fertilizers.map((fert, index) => (
-                    <div 
-                      key={index} 
-                      className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-lg border border-green-200"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 rounded-lg">
-                            <Package className="h-5 w-5 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-900">{fert.name}</h3>
-                            <p className="text-sm text-gray-600">NPK: {fert.npk}</p>
-                          </div>
-                        </div>
-                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
-                          {fert.reason}
-                        </span>
+              <div className="space-y-2">
+                <Label>Phosphorus (P) - kg/ha</Label>
+                <Input
+                  name="P"
+                  type="number"
+                  value={formData.P}
+                  onChange={handleChange}
+                  className="border-green-200"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Potassium (K) - kg/ha</Label>
+                <Input
+                  name="K"
+                  type="number"
+                  value={formData.K}
+                  onChange={handleChange}
+                  className="border-green-200"
+                  required
+                />
+              </div>
+
+              <Button type="submit" disabled={loading}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Calculating...</> : "Get Recommendations"}
+              </Button>
+
+            </form>
+          </CardContent>
+        </Card>
+
+
+        {/* Advisor Results */}
+        {result && (
+          <>
+            <Card className="border-green-200">
+              <CardHeader>
+                <CardTitle>Recommended Fertilizers</CardTitle>
+                <CardDescription>Optimal mix for {formData.crop}</CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {result.fertilizers.map((fert, idx) => (
+                  <div key={idx} className="p-4 bg-white border border-green-200 rounded-lg">
+
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="bg-emerald-600 p-2 rounded-md">
+                        <Package className="text-white h-5 w-5" />
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-3 mt-3">
-                        <div className="bg-white p-2 rounded">
-                          <p className="text-xs text-gray-600">Quantity</p>
-                          <p className="text-lg font-bold text-emerald-700">{fert.quantity} kg</p>
-                        </div>
-                        <div className="bg-white p-2 rounded">
-                          <p className="text-xs text-gray-600">Total Cost</p>
-                          <p className="text-lg font-bold text-emerald-700">₹{(fert.quantity * fert.price_per_kg).toFixed(2)}</p>
-                        </div>
+                      <div>
+                        <p className="font-bold text-lg">{fert.name}</p>
+                        <p className="text-gray-700 text-sm">NPK: {fert.npk}</p>
                       </div>
-                      
-                      <p className="text-xs text-gray-600 mt-2 italic">{fert.use}</p>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
 
-              <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Total Fertilizer Cost</p>
-                      <p className="text-3xl font-bold text-emerald-700">₹{getTotalCost().toFixed(2)}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 rounded p-2 text-center">
+                        <p className="text-gray-700 text-sm">Quantity</p>
+                        <p className="text-emerald-700 font-bold text-xl">{fert.quantity} kg</p>
+                      </div>
+
+                      <div className="bg-emerald-50 rounded p-2 text-center">
+                        <p className="text-gray-700 text-sm">Cost</p>
+                        <p className="text-emerald-700 font-bold text-xl">₹{(fert.quantity * fert.price_per_kg).toFixed(2)}</p>
+                      </div>
                     </div>
-                    <Leaf className="h-12 w-12 text-emerald-600 opacity-50" />
+
                   </div>
-                  <p className="text-xs text-gray-600 mt-3">Estimated cost for per hectare application</p>
-                </CardContent>
-              </Card>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-green-200">
+              <CardContent className="py-6 flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-600">Advisor Estimated Total</p>
+                  <p className="text-4xl font-bold text-emerald-700">₹{totalCost.toFixed(2)}</p>
+                </div>
+                <Calculator className="h-12 w-12 text-emerald-600 opacity-70" />
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+
+
+        {/* Manual Cost Calculator Section */}
+        <Card className="border-green-200">
+          <CardHeader>
+            <CardTitle>Manual Fertilizer Cost Calculator</CardTitle>
+            <CardDescription>Add fertilizers and enter market rates</CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+
+            {items.map((item, idx) => (
+              <div key={idx} className="p-4 bg-white border border-green-200 rounded-lg space-y-3">
+                
+                <p className="text-gray-600 font-semibold">Item #{idx + 1}</p>
+                
+                <Label>Fertilizer Type</Label>
+                <Select
+                  onValueChange={(value) => handleManualChange(idx, 'fertilizer', value)}
+                >
+                  <SelectTrigger className="border-green-200">
+                    <SelectValue placeholder="Select fertilizer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Urea">Urea (46-0-0)</SelectItem>
+                    <SelectItem value="DAP">DAP (18-46-0)</SelectItem>
+                    <SelectItem value="MOP">MOP (0-0-60)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Quantity (kg)</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      className="border-green-200"
+                      value={item.qty}
+                      onChange={(e) => handleManualChange(idx, 'qty', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Price (₹/kg)</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      className="border-green-200"
+                      value={item.price}
+                      onChange={(e) => handleManualChange(idx, 'price', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+              </div>
+            ))}
+
+            <Button
+              onClick={handleAddItem}
+              className="w-full border border-emerald-600 text-emerald-700 bg-white hover:bg-emerald-50"
+            >
+              + Add Another Fertilizer
+            </Button>
+
+
+            <Button
+              onClick={calculateManualCost}
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white"
+            >
+              Calculate Total Cost
+            </Button>
+
+            <div className="text-center text-lg font-bold text-emerald-700">
+              ₹{manualTotal.toFixed(2)}
             </div>
-          )}
-        </div>
+
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   );
 };
 
-export default FertilizerRecommendation;
+export default FertilizerAdvisorCombined;
