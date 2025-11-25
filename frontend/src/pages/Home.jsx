@@ -41,13 +41,6 @@ const Home = () => {
       color: 'from-green-600 to-lime-600'
     },
     {
-      icon: Calculator,
-      title: 'Cost Calculator',
-      description: 'Calculate fertilizer cost estimate',
-      link: '/cost-calculator',
-      color: 'from-lime-600 to-yellow-600'
-    },
-    {
       icon: Lightbulb,
       title: 'Improvement Tips',
       description: 'Get soil improvement suggestions',
